@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>File Upload</title>
+  </head>
+  <style>
+    .msg {
+      color: rgb(13, 126, 226);
+      font-size: calc(30px + 1vw);
+      margin: 25px;
+    }
+    .container {
+      display: flex;
+      margin-top: 10vh;
+    }
+    .fileup {
+      width: 30%;
+      padding: calc(50px + 1vw);
+      box-sizing: border-box;
+    }
+    #btns {
+    }
+    input[type="file"]::file-selector-button {
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      background-color: #c9510b;
+      color: white;
+      font-size: 25px;
+    }
+
+    #btns {
+      border: none;
+      font-size: 30px;
+      width: 180px;
+      margin: 20px;
+      padding: 10px;
+      letter-spacing: 3px;
+      background-color: rgb(9, 125, 203);
+      color: rgb(236, 239, 240);
+      border-radius: 10px;
+      margin-top: 10vh;
+    }
+
+    .fileup {
+      display: flex;
+      flex-direction: column;
+    }
+    #btns:hover {
+      background-color: rgb(12, 99, 249);
+    }
+    .out {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      width: 44vw;
+      height: 70vh;
+      overflow-y: scroll; /* Vertical scroll only */
+      overflow-x: hidden; /* Hide horizontal scroll */
+      border: 1px solid #d71d1d;
+      background-color: rgb(17, 17, 17);
+      padding: 30px;
+      right: 0;
+      font-size: 23px;
+      font-weight: 400;
+    }
+    .txtup {
+      color: rgb(5, 198, 228);
+    }
+    .txttitle {
+      color: rgb(7, 228, 92);
+    }
+    .txtbody {
+      color: rgb(229, 121, 14);
+    }
+    .clip{
+      position: absolute;
+      right: 20%;
+      margin-top: -5vh;
+      border: none;
+      padding: 12px;
+      background-color: cadetblue;
+      border-radius: 10px;
+      color: aliceblue;
+    }
+  </style>
+  <body>
+    <!-- headers -->
+    <div class="msg">CSV TO JSON</div>
+
+    <!--  -->
+    <div class="container">
+      <div class="fileup">
+        <input type="file" id="fileInput" accept=".csv" />
+        <button id="btns" onclick="uploadFile()">Convert</button>
+      </div>
+      <div>
+        <div><button class="clip">COPY TO CLIPBOARD</button></div>
+        <div class="out">
+
+      </div>
+      </div>
+      
+    </div>
+
+    <script>
+      let copydata="";
+      function downloadTextAsFile(text, filename) {
+        // Create a Blob object from the text content
+        const blob = new Blob([text], { type: "text/plain" });
+
+        // Create a temporary link element
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+
+        // Trigger the download
+        link.click();
+
+        // Clean up the temporary link
+        URL.revokeObjectURL(link.href);
+      }
+
+      function uploadFile(e) {
+
+       
+        const fileInput = document.getElementById("fileInput");
+        let out = document.querySelector(".out");
+        const file = fileInput.files[0];
+
+      if (!file) {
+        alert('No file selected!');
+        return;
+      }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        let filename = file.name;
+
+        fetch(`http://65.1.108.226:8080/`, {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            downloadTextAsFile(JSON.stringify(data),Math.random()+".json")
+            out.innerHTML=`<div>  Loading....................</div>`;
+            let txt = "";
+            txt += `<div class="txtup">[</div><br>`;
+            for (let i = 0; i < data.length; i++) {
+              txt += `<div class="txttitle">{</div><br>`;
+              let arr = Object.keys(data[i]);
+
+              for (let j = 0; j < arr.length; j++) {
+                txt += `<div class="txtbody">${arr[j]} : ${
+                  data[i][arr[j]]
+                }</div> <br>`;
+              }
+              txt += `<br><div class="txttitle">}</div> <br>`;
+            }
+            txt += `<div class="txtup">]</div> <br>`;
+
+            out.innerHTML = txt;
+
+
+copydata=JSON.stringify(data)            
+
+          })
+          .catch((error) => {
+            console.error("An error occurred:", error);
+          });
+      }
+
+      let clipbtn=document.querySelector(".clip");
+
+      clipbtn.addEventListener("click",()=>{
+        navigator.clipboard.writeText(copydata)
+      })
+    </script>
+  </body>
+</html>
